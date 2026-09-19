@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+/*
+  設計變數（design tokens）：把顏色集中定義在這裡，
+  所有元件用 bg-card、text-accent 這類語意化的名稱，而不是散落各處的
+  bg-white / dark:bg-zinc-900，之後要整體換風格只要改這裡就好。
+*/
+:root {
+  --background: #f6f6fb; /* 頁面底色：帶一點點紫的亮灰，比純白更柔和有質感 */
+  --foreground: #16161f; /* 主要文字色 */
+  --card: #ffffff; /* 卡片、輸入框等前景色塊 */
+  --card-foreground: #16161f;
+  --muted: #8b8d98; /* 次要文字（說明文字、時間戳記） */
+  --border: rgba(15, 15, 25, 0.08); /* 卡片邊框，比純黑邊框柔和 */
+  --accent: #6d5ef8; /* 品牌強調色：紫藍色，用在按鈕、選中狀態、連結 */
+  --accent-foreground: #ffffff; /* 放在 accent 底色上的文字顏色 */
+  --accent-soft: #efedff; /* accent 的淺色版本，用在淡底色區塊 */
+  --danger: #e5484d; /* 支出 */
+  --success: #12a594; /* 收入 */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #131318; /* 深色模式也避免用純黑，保留一點層次感 */
+    --foreground: #f2f2f7;
+    --card: #1c1c24;
+    --card-foreground: #f2f2f7;
+    --muted: #93939f;
+    --border: rgba(255, 255, 255, 0.08);
+    --accent: #9084fa; /* 深色背景下用亮一點的紫色維持對比度 */
+    --accent-foreground: #131318;
+    --accent-soft: #2a2740;
+    --danger: #f2555a;
+    --success: #2dd4bf;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
