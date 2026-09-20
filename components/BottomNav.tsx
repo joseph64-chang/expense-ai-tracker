@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 // 兩個分頁：首頁「記帳」跟「統計」，icon 直接用 inline SVG，不用另外裝圖示套件
 const TABS = [
@@ -36,9 +37,36 @@ const TABS = [
   },
 ];
 
+// 後台管理的分頁，只有 admin 才會看到（見下方 isAdmin 判斷）
+const ADMIN_TAB = {
+  href: "/admin",
+  label: "後台",
+  icon: (active: boolean) => (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth={active ? 2 : 1.5} />
+      <path
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+        stroke="currentColor"
+        strokeWidth={active ? 1.6 : 1.2}
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+};
+
 export default function BottomNav() {
   // usePathname 讓我們知道目前在哪一頁，藉此把對應的 tab 反白
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // 查一次目前登入者的角色，決定要不要多顯示「後台」分頁
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => setIsAdmin(data.user?.role === "admin"));
+  }, []);
+
+  const tabs = isAdmin ? [...TABS, ADMIN_TAB] : TABS;
 
   return (
     // 浮動膠囊式導覽列：離畫面底部有一點距離，比貼齊邊緣的長條看起來更精緻。
@@ -46,7 +74,7 @@ export default function BottomNav() {
     // 要把這段距離也算進去，導覽列才會貼齊「手機外框」而不是貼齊整個瀏覽器視窗底部。
     <nav className="fixed inset-x-0 bottom-4 z-20 mx-auto w-[calc(100%-2rem)] max-w-md sm:bottom-10">
       <div className="flex items-center gap-1 rounded-full border border-border bg-card/95 p-1.5 shadow-lg shadow-black/10 backdrop-blur">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const active = pathname === tab.href;
           return (
             <Link

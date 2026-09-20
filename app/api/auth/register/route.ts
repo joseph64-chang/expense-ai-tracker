@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import UserModel from "@/models/User";
 import { hashPassword } from "@/lib/password";
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/session";
+import { isAdminEmail } from "@/lib/admin";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -41,7 +42,9 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await hashPassword(password);
-  const user = await UserModel.create({ email, passwordHash, name, role: "user" });
+  // email 符合 ADMIN_EMAIL 就直接註冊成管理者，其他一律是一般使用者
+  const role = isAdminEmail(email) ? "admin" : "user";
+  const user = await UserModel.create({ email, passwordHash, name, role });
 
   // 註冊完直接視為登入：簽發 session token 並寫進 cookie
   const token = await createSessionToken({

@@ -27,10 +27,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // 後台管理路徑只有 admin 能進，一般使用者當作沒有這個地方
+  const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+  if (isAdminPath && session.role !== "admin") {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
   return NextResponse.next();
 }
 
 // 只在這些路徑上執行，避免每個靜態資源請求都白白驗證一次 cookie
 export const config = {
-  matcher: ["/", "/stats", "/login", "/register", "/api/expenses/:path*"],
+  matcher: [
+    "/",
+    "/stats",
+    "/login",
+    "/register",
+    "/admin/:path*",
+    "/api/expenses/:path*",
+    "/api/admin/:path*",
+  ],
 };
