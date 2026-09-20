@@ -3,6 +3,7 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
 import DateStrip from "@/components/DateStrip";
+import ExpenseEditModal, { type EditableExpense } from "@/components/ExpenseEditModal";
 import { toDateKey } from "@/lib/date";
 import { CATEGORY_COLORS } from "@/lib/categories";
 
@@ -32,6 +33,9 @@ export default function Home() {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 目前被點開要編輯的那一筆紀錄，null 代表沒有 modal 開著
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   // 進頁面時查一次「我是誰」，用來顯示歡迎訊息
   useEffect(() => {
@@ -101,6 +105,24 @@ export default function Home() {
     }
   }
 
+  // 紀錄編輯完儲存成功：如果改完還是同一天就直接更新畫面上那一筆，
+  // 如果改到別的日期，這筆就不該再出現在目前這個列表裡
+  function handleExpenseSaved(updated: EditableExpense) {
+    setEditingExpense(null);
+    if (updated.dateKey === selectedDate) {
+      setExpenses((prev) =>
+        prev.map((item) => (item._id === updated._id ? { ...item, ...updated, date: updated.dateKey } : item))
+      );
+    } else {
+      setExpenses((prev) => prev.filter((item) => item._id !== updated._id));
+    }
+  }
+
+  function handleExpenseDeleted(id: string) {
+    setEditingExpense(null);
+    setExpenses((prev) => prev.filter((item) => item._id !== id));
+  }
+
   // 分開加總「支出小計」跟「收入小計」，比顯示單一淨額更容易一眼看懂
   const expenseTotal = expenses
     .filter((item) => item.type === "expense")
@@ -167,9 +189,11 @@ export default function Home() {
         )}
 
         {expenses.map((item) => (
-          <div
+          <button
             key={item._id}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm shadow-black/[.03]"
+            type="button"
+            onClick={() => setEditingExpense(item)}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left shadow-sm shadow-black/[.03] transition-colors active:bg-background"
           >
             {/* 分類色點：外面一圈淡色暈染，顏色對應 lib/categories.ts 裡的 CATEGORY_COLORS */}
             <span
@@ -186,24 +210,34 @@ export default function Home() {
                 }}
               />
             </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{item.description}</p>
+            {/* button 裡只能放行內元素（phrasing content），所以這裡用 span + block 取代 div/p */}
+            <span className="block min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">{item.description}</span>
               {/* 共用記帳本：標示這筆是誰記的 */}
-              <p className="text-xs text-muted">
+              <span className="block text-xs text-muted">
                 {item.category} ・ {item.userName}
-              </p>
-            </div>
-            <p
+              </span>
+            </span>
+            <span
               className={`shrink-0 text-sm font-semibold ${
                 item.type === "expense" ? "text-danger" : "text-success"
               }`}
             >
               {item.type === "expense" ? "-" : "+"}
               {item.amount}
-            </p>
-          </div>
+            </span>
+          </button>
         ))}
       </div>
+
+      {editingExpense && (
+        <ExpenseEditModal
+          expense={editingExpense}
+          onClose={() => setEditingExpense(null)}
+          onSaved={handleExpenseSaved}
+          onDeleted={handleExpenseDeleted}
+        />
+      )}
     </div>
   );
 }
